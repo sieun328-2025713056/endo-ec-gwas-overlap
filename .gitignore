@@ -1,0 +1,44 @@
+# Large/raw data
+raw/
+ref/
+munged/
+results/
+
+# Local external tools/resources
+ldsc/
+pleiofdr/
+python_convert/
+
+# Large generated files
+*.mat
+*.gz
+*.zip
+*.fig
+*.log
+
+# Local backups and temporary files
+*_backup*/
+*_backup_*
+_local_cleanup_backup/
+*.tmp
+*.bak
+*.before_verify_first_*
+
+# Python/R/MATLAB cache
+__pycache__/
+*.pyc
+.Rhistory
+.RData
+.ipynb_checkpoints/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Local logs and extracted package copies
+logs/
+endo_ec_gwas_code_package_v2/
+README_code_package.md.backup_before_auto_fix_*
+README_code_package.md.before_verify_notes_*
