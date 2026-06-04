@@ -77,3 +77,12 @@ Expected verified outputs include:
 
 The paths in `scripts/00_config.sh` reflect the local analysis environment and should be edited by each user before running the workflow.
 
+
+## Documentation notes
+
+Additional documentation is provided in the `docs/` directory:
+
+- `docs/data_sources.md`: source GWAS datasets and redistribution notes
+- `docs/sample_size_derivation.md`: derivation of the 23andMe-excluded overall endometriosis sample size
+- `docs/final_output_tables.md`: expected final output tables from the workflow
+- `docs/interpretation_limits.md`: interpretation limits for LDSC, conjFDR, and colocalization analyses
