@@ -1,0 +1,28 @@
+{
+  "query_utc": "2026-07-18T13:47:43.272601+00:00",
+  "api_base": "https://gtexportal.org/api/v2",
+  "dataset": "gtex_v10",
+  "gencode_version": "v39",
+  "genome_build": "GRCh38/hg38",
+  "variant": "chr12_26273487_T_C_b38",
+  "target_tissue": "Uterus",
+  "genes": [
+    {
+      "gene_symbol": "BHLHE41",
+      "gencode_id": "ENSG00000123095.6"
+    },
+    {
+      "gene_symbol": "SSPN",
+      "gencode_id": "ENSG00000123096.12"
+    },
+    {
+      "gene_symbol": "ENSG00000256894",
+      "gencode_id": "ENSG00000256894.1"
+    },
+    {
+      "gene_symbol": "ENSG00000255750",
+      "gencode_id": "ENSG00000255750.6"
+    }
+  ],
+  "interpretation_rule": "Call a uterus association significant only when pValue <= pValueThreshold. HTTP errors or missing values are not null results."
+}
