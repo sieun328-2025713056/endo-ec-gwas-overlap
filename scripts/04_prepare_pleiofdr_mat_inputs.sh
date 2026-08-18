@@ -23,8 +23,6 @@ source "$SCRIPT_DIR/00_config.sh"
 mkdir -p "$CJ/logs"
 mkdir -p "$PLEIO/traitfiles"
 
-PYCONVERT_PYTHON="${PYCONVERT_PYTHON:-/home/sieun/miniconda3/envs/ldsc/bin/python}"
-
 SUMSTATS_PY=""
 for candidate in \
   "$PYCONVERT_DIR/sumstats.py" \
@@ -64,6 +62,7 @@ done
 echo
 echo "### Checking existing pleioFDR MAT trait files"
 missing_mat=0
+
 for f in "${MAT_NAMES[@]}"; do
   path="$PLEIO/traitfiles/$f"
   if [[ ! -s "$path" ]]; then
@@ -91,7 +90,8 @@ else
   echo "### RUN_CONVERSION=1: generating MAT files"
 
   if [[ ! -x "$PYCONVERT_PYTHON" ]]; then
-    echo "Missing PYCONVERT_PYTHON: $PYCONVERT_PYTHON" >&2
+    echo "Missing or non-executable PYCONVERT_PYTHON: $PYCONVERT_PYTHON" >&2
+    echo "Set PYCONVERT_PYTHON to the Python executable used for python_convert." >&2
     exit 1
   fi
 
@@ -132,9 +132,18 @@ fi
 echo
 echo "### Verifying MAT file structure with MATLAB"
 
-PLEIO_WIN="$(wslpath -w "$PLEIO")"
+# Convert the pleioFDR path for Windows MATLAB when running from WSL.
+# Otherwise retain the native path.
+if command -v wslpath >/dev/null 2>&1 && [[ "$MATLAB_BIN" == *.exe ]]; then
+  PLEIO_MATLAB="$(wslpath -w "$PLEIO")"
+else
+  PLEIO_MATLAB="$PLEIO"
+fi
 
-"$MATLAB_BIN" -batch "cd('$PLEIO_WIN'); whos('-file','traitfiles/adenomyosis_noMHC.mat'); whos('-file','traitfiles/allEC_noMHC.mat'); whos('-file','traitfiles/adenomyosis_EECpair_noMHC.mat'); whos('-file','traitfiles/EEC_noMHC.mat')"
+echo "Using MATLAB executable: $MATLAB_BIN"
+echo "Using pleioFDR path in MATLAB: $PLEIO_MATLAB"
+
+"$MATLAB_BIN" -batch "cd('$PLEIO_MATLAB'); whos('-file','traitfiles/adenomyosis_noMHC.mat'); whos('-file','traitfiles/allEC_noMHC.mat'); whos('-file','traitfiles/adenomyosis_EECpair_noMHC.mat'); whos('-file','traitfiles/EEC_noMHC.mat')"
 
 echo
 echo "### 04_prepare_pleiofdr_mat_inputs.sh completed"

@@ -6,9 +6,9 @@ import os
 import re
 
 PROJECT = os.environ.get("PROJECT", os.path.expanduser("~/projects/endo_ecancer"))
-H2 = os.path.join(PROJECT, "results", "h2")
-RG = os.path.join(PROJECT, "results", "rg")
-TABLES = os.path.join(PROJECT, "results", "tables")
+H2 = os.environ.get("H2", os.path.join(PROJECT, "results", "h2"))
+RG = os.environ.get("RG", os.path.join(PROJECT, "results", "rg"))
+TABLES = os.environ.get("TABLES", os.path.join(PROJECT, "results", "tables"))
 os.makedirs(TABLES, exist_ok=True)
 
 trait_labels = {
@@ -86,5 +86,134 @@ with open(os.path.join(TABLES, "table_s2_ldsc_rg_from_logs.tsv"), "w", newline="
     fieldnames = ["Log_file","Comparison","rg","SE","Z","P"]
     w = csv.DictWriter(f, fieldnames=fieldnames, delimiter="\t")
     w.writeheader(); w.writerows(rg_rows)
+
+# Multiple-testing correction across the six primary cross-trait rg tests.
+# Benjamini-Hochberg FDR is supportive; Bonferroni correction across six
+# primary tests (alpha = 0.05 / 6) defines the primary significance threshold.
+
+primary_comparisons = [
+    ("rg_adenomyosis_EUR_allEC", "Adenomyosis", "All-histology EC"),
+    ("rg_adenomyosis_EUR_EEC", "Adenomyosis", "Endometrioid EC"),
+    ("rg_endometriosis_EUR_allEC", "Overall endometriosis", "All-histology EC"),
+    ("rg_endometriosis_EUR_EEC", "Overall endometriosis", "Endometrioid EC"),
+    ("rg_endometriosis_wo_adeno_EUR_allEC", "Endometriosis without adenomyosis", "All-histology EC"),
+    ("rg_endometriosis_wo_adeno_EUR_EEC", "Endometriosis without adenomyosis", "Endometrioid EC"),
+]
+
+rg_by_comparison = {row["Comparison"]: row for row in rg_rows}
+
+primary_rows = []
+for key, endo_label, ec_label in primary_comparisons:
+    if key not in rg_by_comparison:
+        raise RuntimeError(f"Missing primary LDSC comparison: {key}")
+    row = rg_by_comparison[key]
+    primary_rows.append({
+        "Comparison": key,
+        "Endometriosis_phenotype": endo_label,
+        "Endometrial_cancer_outcome": ec_label,
+        "rg": float(row["rg"]),
+        "SE": float(row["SE"]),
+        "Z": float(row["Z"]),
+        "P": float(row["P"]),
+    })
+
+# Benjamini-Hochberg adjusted P-values.
+m = len(primary_rows)
+order = sorted(range(m), key=lambda i: primary_rows[i]["P"])
+bh = [None] * m
+running_min = 1.0
+
+for rank_from_end, idx in enumerate(reversed(order), start=1):
+    rank = m - rank_from_end + 1
+    adjusted = primary_rows[idx]["P"] * m / rank
+    running_min = min(running_min, adjusted)
+    bh[idx] = min(running_min, 1.0)
+
+for i, row in enumerate(primary_rows):
+    row["BH_FDR_q"] = bh[i]
+    row["Bonferroni_significant"] = "Yes" if row["P"] < (0.05 / 6) else "No"
+
+with open(
+    os.path.join(TABLES, "table_s7_ldsc_rg_multiple_testing_correction.tsv"),
+    "w",
+    newline=""
+) as f:
+    fieldnames = [
+        "Comparison",
+        "Endometriosis_phenotype",
+        "Endometrial_cancer_outcome",
+        "rg",
+        "SE",
+        "Z",
+        "P",
+        "BH_FDR_q",
+        "Bonferroni_significant",
+    ]
+    w = csv.DictWriter(f, fieldnames=fieldnames, delimiter="\t")
+    w.writeheader()
+    w.writerows(primary_rows)
+
+
+# Approximate between-phenotype rg difference tests within each EC outcome.
+# These tests use sqrt(SE1^2 + SE2^2) and therefore do not model covariance
+# arising from the shared EC GWAS or non-independent endometriosis estimates.
+
+phenotype_pairs = [
+    ("Adenomyosis", "Overall endometriosis"),
+    ("Adenomyosis", "Endometriosis without adenomyosis"),
+    ("Endometriosis without adenomyosis", "Overall endometriosis"),
+]
+
+outcomes = ["All-histology EC", "Endometrioid EC"]
+
+lookup = {
+    (row["Endometriosis_phenotype"], row["Endometrial_cancer_outcome"]): row
+    for row in primary_rows
+}
+
+difference_rows = []
+
+for outcome in outcomes:
+    for phenotype1, phenotype2 in phenotype_pairs:
+        row1 = lookup[(phenotype1, outcome)]
+        row2 = lookup[(phenotype2, outcome)]
+
+        difference = row1["rg"] - row2["rg"]
+        se_difference = math.sqrt(row1["SE"] ** 2 + row2["SE"] ** 2)
+        z_difference = difference / se_difference
+
+        p_difference = math.erfc(abs(z_difference) / math.sqrt(2.0))
+
+        difference_rows.append({
+            "Endometrial_cancer_outcome": outcome,
+            "Phenotype_1": phenotype1,
+            "Phenotype_2": phenotype2,
+            "rg_1": row1["rg"],
+            "rg_2": row2["rg"],
+            "rg_difference": difference,
+            "SE_difference_approx": se_difference,
+            "Z_difference_approx": z_difference,
+            "P_difference_approx": p_difference,
+        })
+
+with open(
+    os.path.join(TABLES, "table_s3_rg_approx_difference_test_from_logs.tsv"),
+    "w",
+    newline=""
+) as f:
+    fieldnames = [
+        "Endometrial_cancer_outcome",
+        "Phenotype_1",
+        "Phenotype_2",
+        "rg_1",
+        "rg_2",
+        "rg_difference",
+        "SE_difference_approx",
+        "Z_difference_approx",
+        "P_difference_approx",
+    ]
+    w = csv.DictWriter(f, fieldnames=fieldnames, delimiter="\t")
+    w.writeheader()
+    w.writerows(difference_rows)
 
 print("Wrote LDSC tables to", TABLES)

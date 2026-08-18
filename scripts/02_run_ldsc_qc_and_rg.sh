@@ -45,7 +45,7 @@ for trait in \
     --out "$H2/$trait"
 done
 
-# Genetic correlations: 3 exposure phenotypes x 2 EC outcomes.
+# Genetic correlations: 3 endometriosis-spectrum phenotypes x 2 EC outcomes.
 declare -A exposures=(
   [endometriosis_EUR]="endometriosis_EUR"
   [adenomyosis_EUR]="adenomyosis_EUR"

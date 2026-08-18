@@ -24,3 +24,8 @@
 ## Colocalization
 
 - `scripts/06_run_coloc_chr12_rs9668810.R`: runs exploratory P-value-based colocalization for the chr12 rs9668810-indexed region using all-histology and endometrioid endometrial cancer regional inputs.
+
+## GTEx V10 functional annotation
+
+- `scripts/clean/09_query_gtex_v10_rs9668810.py`: queries GTEx Analysis Release V10 for significant single-tissue eQTL associations involving rs9668810 and performs targeted uterus eQTL queries for the evaluated nearby genes.
+- `scripts/clean/10_make_gtex_uterus_final_audit.py`: summarizes the reproduced GTEx V10 uterus-query results into the final audit table used for functional-annotation verification.

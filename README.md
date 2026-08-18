@@ -8,13 +8,14 @@ The code package is designed to support manuscript-level reproducibility while a
 
 This workflow supports the following analysis components:
 
-- Preparation of endometrial cancer summary statistics for LD Score regression (LDSC).
+- Preparation of endometrial cancer summary statistics for LD Score Regression (LDSC).
 - LDSC munging, SNP-heritability quality control, and genetic correlation analyses.
 - Harmonization of GWAS summary statistics for conjFDR/pleioFDR analyses.
 - Verification or optional generation of pleioFDR-compatible `.mat` trait files.
 - Verification of matched SNP-universe inputs for the six-pair decomposition analysis.
-- Optional regional colocalization around the chr12 rs9668810-indexed region.
-- Generation or verification of manuscript tables from LDSC, pleioFDR, and decomposition outputs.
+- Exploratory regional colocalization around the chr12 rs9668810-indexed region.
+- Reproducible GTEx V10 eQTL follow-up of the chr12 rs9668810-indexed signal.
+- Generation or verification of manuscript-related tables from LDSC, pleioFDR, decomposition, colocalization, and functional-annotation outputs.
 
 ## Repository status
 
@@ -67,24 +68,23 @@ The expected project structure is:
 
 ```text
 endo_ecancer/
-├── raw/                 # restricted raw GWAS summary statistics; not included
-├── ref/                 # LD/reference files; not included
-├── munged/              # LDSC munged summary statistics
+├── raw/                  # restricted raw GWAS summary statistics; not included
+├── ref/                  # LD/reference files; not included
+├── munged/               # LDSC munged summary statistics
 ├── results/
-│   ├── tables/          # manuscript and supplementary tables
-│   └── conjfdr/         # large conjFDR-related intermediate files; not included
-├── scripts/             # reproducibility scripts
-├── docs/                # documentation files
+│   ├── tables/           # workflow summary tables
+│   ├── coloc/            # regional colocalization outputs
+│   ├── conjfdr/          # large conjFDR-related intermediate files; not included
+│   └── reproduced_gtex/  # reproduced GTEx V10 follow-up outputs
+├── scripts/
+│   └── clean/            # GTEx V10 reproducibility scripts
+├── docs/                 # workflow documentation
 └── README.md
 ```
 
 ## Configuration
 
-Before running the workflow, edit:
-
-```text
-scripts/00_config.sh
-```
+Before running the workflow, review `scripts/00_config.sh` and either modify the default paths or override them using environment variables.
 
 The configuration file defines local paths such as:
 
@@ -98,18 +98,18 @@ CJ=/path/to/endo_ecancer/results/conjfdr
 PLEIO=/path/to/pleiofdr
 ```
 
-These paths reflect the local analysis environment and should be modified by each user before running the workflow.
+These paths reflect the local analysis environment and can be modified by each user before running the workflow.
 
 ## Software environment
 
-The primary analysis workflow used the following software and environments:
+The primary analysis workflow used the following software and computational environments:
 
 - LD Score Regression (LDSC) v1.0.1 in a Python 2.7.18 environment for summary-statistics munging, SNP-heritability quality control, and genetic correlation analyses.
 - pleioFDR/conjFDR with MATLAB R2026a for conjunctional FDR-related processing and `.mat` file handling.
-- R with `coloc` v5.2.3 and `data.table` for exploratory chr12 regional colocalization.
-- Python 3 for table processing, recurrent-locus grouping, and GTEx V10 API-based eQTL follow-up.
+- R with `coloc` v5.2.3 and `data.table` for exploratory P-value-based regional colocalization.
+- Python 3, including the `requests` package, for table processing, recurrent-locus grouping, and GTEx V10 API-based eQTL follow-up.
 
-The workflow also uses externally obtained LD/reference resources and pleioFDR/conjFDR software that are not redistributed in this repository. Local software and resource paths can be configured through `scripts/00_config.sh` and environment variables.
+The workflow also uses externally obtained LD/reference resources and pleioFDR/conjFDR software that are not redistributed in this repository. Local software and resource paths can be configured through `scripts/00_config.sh` and relevant environment variables.
 
 ## Main workflow
 
@@ -126,6 +126,8 @@ scripts/06_run_coloc_chr12_rs9668810.R
 scripts/07_make_ldsc_tables_from_logs.py
 scripts/08_collect_decomp_raw_loci.py
 scripts/09_group_decomp_loci_table.py
+scripts/clean/09_query_gtex_v10_rs9668810.py
+scripts/clean/10_make_gtex_uterus_final_audit.py
 ```
 
 A typical workflow is:
@@ -142,6 +144,8 @@ Rscript scripts/06_run_coloc_chr12_rs9668810.R
 python3 scripts/07_make_ldsc_tables_from_logs.py
 python3 scripts/08_collect_decomp_raw_loci.py
 python3 scripts/09_group_decomp_loci_table.py
+python3 scripts/clean/09_query_gtex_v10_rs9668810.py results/reproduced_gtex
+python3 scripts/clean/10_make_gtex_uterus_final_audit.py
 ```
 
 ## Verify-first downstream workflow
@@ -167,7 +171,7 @@ Scripts 08 and 09 do not overwrite existing output tables if zero rows are detec
 
 ## Expected verified outputs
 
-Expected verified outputs include:
+Expected verified pleioFDR and decomposition outputs include:
 
 ```text
 $PLEIO/traitfiles/adenomyosis_noMHC.mat
@@ -180,16 +184,32 @@ results/tables/table_s9_decomp_conjfdr_loci_raw.tsv
 results/tables/table_s10_decomp_locus_grouped_from_file.tsv
 ```
 
-Expected final manuscript or supplementary tables include:
+## Workflow output tables
+
+The workflow generates or uses several intermediate and downstream summary tables. Internal filenames such as `table_s1`, `table_s7`, and `table_s14` reflect workflow-development labels and do not necessarily correspond to the final numbering of manuscript supplementary tables.
+
+LDSC-derived tables generated by `scripts/07_make_ldsc_tables_from_logs.py` include:
 
 ```text
 results/tables/table_s1_ldsc_h2_qc_from_logs.tsv
 results/tables/table_s2_ldsc_rg_from_logs.tsv
 results/tables/table_s3_rg_approx_difference_test_from_logs.tsv
 results/tables/table_s7_ldsc_rg_multiple_testing_correction.tsv
-results/tables/table_s8_decomp_conjfdr_pair_counts.tsv
+```
+
+The multiple-testing output applies Benjamini–Hochberg FDR correction across the six primary cross-trait genetic-correlation tests. The approximate between-phenotype difference tests use `sqrt(SE1^2 + SE2^2)` and do not model covariance arising from the shared endometrial cancer GWAS or non-independent endometriosis-spectrum estimates.
+
+Pair-specific and recurrent-locus outputs directly verified or rebuilt by the public decomposition scripts include:
+
+```text
 results/tables/table_s9_decomp_conjfdr_loci_raw.tsv
 results/tables/table_s10_decomp_locus_grouped_from_file.tsv
+```
+
+Additional downstream summary tables retained for workflow traceability include:
+
+```text
+results/tables/table_s8_decomp_conjfdr_pair_counts.tsv
 results/tables/table_s11_key_recurrent_loci_decomposition.tsv
 results/tables/table_s12_pair_level_directionality_summary.tsv
 results/tables/table_s13_grouped_locus_classification_direction_summary.tsv
@@ -197,19 +217,50 @@ results/tables/table_s14_key_recurrent_loci_compact_summary.tsv
 results/tables/table_s15_phenotype_pairwise_rg.tsv
 ```
 
+Not all downstream summary tables are regenerated by the cleaned public code package. Detailed output provenance is documented in `docs/final_output_tables.md`.
+
+## Regional colocalization outputs
+
+`scripts/06_run_coloc_chr12_rs9668810.R` generates separate outputs for the adenomyosis–all-histology endometrial cancer and adenomyosis–endometrioid endometrial cancer analyses.
+
+Expected outputs include:
+
+```text
+results/coloc/rs9668810_region/adeno_allEC_rs9668810_500kb_coloc_summary.tsv
+results/coloc/rs9668810_region/adeno_allEC_rs9668810_500kb_coloc_full_results.tsv
+results/coloc/rs9668810_region/adeno_allEC_rs9668810_500kb_top_H4_snps.tsv
+results/coloc/rs9668810_region/adeno_EEC_rs9668810_500kb_coloc_summary.tsv
+results/coloc/rs9668810_region/adeno_EEC_rs9668810_500kb_coloc_full_results.tsv
+results/coloc/rs9668810_region/adeno_EEC_rs9668810_500kb_top_H4_snps.tsv
+```
+
+## GTEx V10 functional-annotation outputs
+
+The GTEx V10 follow-up scripts generate or summarize:
+
+```text
+results/reproduced_gtex/gtex_v10_rs9668810_significant_eqtl.tsv
+results/reproduced_gtex/gtex_v10_rs9668810_uterus_dynamic_eqtl.tsv
+results/reproduced_gtex/gtex_v10_rs9668810_uterus_final_audit.tsv
+results/reproduced_gtex/gtex_v10_rs9668810_query_metadata.json
+```
+
+The GTEx V10 follow-up is exploratory. The outputs are used to document functional-annotation results and do not establish a causal gene or tissue-specific mechanism.
+
 ## Documentation
 
 Additional documentation is provided in the `docs/` directory:
 
 ```text
+docs/code_inventory.md
 docs/data_sources.md
-docs/sample_size_derivation.md
 docs/final_output_tables.md
 docs/interpretation_limits.md
-docs/code_inventory.md
+docs/reproducibility_notes.md
+docs/sample_size_derivation.md
 ```
 
-These files document source GWAS datasets, redistribution limits, derivation of the 23andMe-excluded overall endometriosis sample size, expected final tables, and interpretation limits for LDSC, conjFDR, and colocalization analyses.
+These files document source GWAS datasets, redistribution limits, derivation of the 23andMe-excluded overall endometriosis sample size, code provenance, expected workflow outputs, reproducibility notes, and interpretation limits for LDSC, conjFDR, colocalization, and functional annotation.
 
 ## Interpretation limits
 
@@ -218,6 +269,10 @@ This workflow supports summary-statistics-based genetic epidemiology analyses. T
 Non-detection of a locus in a phenotype pair indicates lack of detection under the current GWAS power, phenotype definition, matched SNP universe, and conjFDR threshold. It should not be interpreted as evidence that the underlying association is absent.
 
 Candidate gene names used in output tables should be interpreted as regional annotations or prioritization labels, not as confirmed causal genes.
+
+Approximate between-phenotype genetic-correlation difference tests do not account for covariance arising from the shared endometrial cancer GWAS or non-independent endometriosis-spectrum estimates and should therefore be interpreted as exploratory.
+
+Regional colocalization and GTEx V10 eQTL follow-up are exploratory and do not establish a causal variant, causal gene, or tissue-specific biological mechanism.
 
 ## Citation
 

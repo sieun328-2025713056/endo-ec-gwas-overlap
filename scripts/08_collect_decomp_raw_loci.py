@@ -21,14 +21,24 @@ import os
 import sys
 import tempfile
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT = os.path.dirname(SCRIPT_DIR)
+PROJECT = os.environ.get(
+    "PROJECT",
+    os.path.expanduser("~/projects/endo_ecancer"),
+)
+RESULTS = os.environ.get(
+    "RESULTS",
+    os.path.join(PROJECT, "results"),
+)
+TABLES = os.environ.get(
+    "TABLES",
+    os.path.join(RESULTS, "tables"),
+)
+PLEIO = os.environ.get(
+    "PLEIO",
+    os.path.expanduser("~/tools/pleiofdr"),
+)
 
-RESULTS = os.path.join(PROJECT, "results")
-TABLES = os.path.join(RESULTS, "tables")
 os.makedirs(TABLES, exist_ok=True)
-
-PLEIO = os.environ.get("PLEIO", "/mnt/c/GWAS_project/pleiofdr")
 
 OUTFILE = os.path.join(TABLES, "table_s9_decomp_conjfdr_loci_raw.tsv")
 REF_PATH = os.path.join(PLEIO, "9545380.ref")
@@ -197,7 +207,7 @@ def rebuild_table():
                     "P_outcome": r[pcols[1]],
                     "conjFDR": r[conj_cols[0]],
                     "Direction": direction,
-                    "Source_file": f,
+                    "Source_file": os.path.basename(f),
                 })
 
     if len(rows) == 0:
