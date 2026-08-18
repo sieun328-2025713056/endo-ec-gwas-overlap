@@ -100,6 +100,17 @@ PLEIO=/path/to/pleiofdr
 
 These paths reflect the local analysis environment and should be modified by each user before running the workflow.
 
+## Software environment
+
+The primary analysis workflow used the following software and environments:
+
+- LD Score Regression (LDSC) v1.0.1 in a Python 2.7.18 environment for summary-statistics munging, SNP-heritability quality control, and genetic correlation analyses.
+- pleioFDR/conjFDR with MATLAB R2026a for conjunctional FDR-related processing and `.mat` file handling.
+- R with `coloc` v5.2.3 and `data.table` for exploratory chr12 regional colocalization.
+- Python 3 for table processing, recurrent-locus grouping, and GTEx V10 API-based eQTL follow-up.
+
+The workflow also uses externally obtained LD/reference resources and pleioFDR/conjFDR software that are not redistributed in this repository. Local software and resource paths can be configured through `scripts/00_config.sh` and environment variables.
+
 ## Main workflow
 
 The analysis workflow is organized as numbered scripts:
