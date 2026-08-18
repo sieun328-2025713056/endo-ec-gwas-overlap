@@ -20,10 +20,21 @@ import os
 import sys
 import tempfile
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT = os.path.dirname(SCRIPT_DIR)
+PROJECT = os.environ.get(
+    "PROJECT",
+    os.path.expanduser("~/projects/endo_ecancer"),
+)
+RESULTS = os.environ.get(
+    "RESULTS",
+    os.path.join(PROJECT, "results"),
+)
+TABLES = os.environ.get(
+    "TABLES",
+    os.path.join(RESULTS, "tables"),
+)
 
-TABLES = os.path.join(PROJECT, "results", "tables")
+os.makedirs(TABLES, exist_ok=True)
+
 INFILE = os.path.join(TABLES, "table_s9_decomp_conjfdr_loci_raw.tsv")
 OUTFILE = os.path.join(TABLES, "table_s10_decomp_locus_grouped_from_file.tsv")
 

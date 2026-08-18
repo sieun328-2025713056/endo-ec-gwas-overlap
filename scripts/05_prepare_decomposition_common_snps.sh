@@ -103,9 +103,18 @@ done
 echo
 echo "### Verifying representative MAT file structure with MATLAB"
 
-PLEIO_WIN="$(wslpath -w "$PLEIO")"
+# Convert the pleioFDR path for Windows MATLAB when running from WSL.
+# Otherwise retain the native path.
+if command -v wslpath >/dev/null 2>&1 && [[ "$MATLAB_BIN" == *.exe ]]; then
+  PLEIO_MATLAB="$(wslpath -w "$PLEIO")"
+else
+  PLEIO_MATLAB="$PLEIO"
+fi
 
-"$MATLAB_BIN" -batch "cd('$PLEIO_WIN'); whos('-file','traitfiles_decomp_common/adeno_allEC_common.mat'); whos('-file','traitfiles_decomp_common/allEC_adeno_common.mat'); whos('-file','traitfiles_decomp_common/adeno_EEC_common.mat'); whos('-file','traitfiles_decomp_common/EEC_adeno_common.mat')"
+echo "Using MATLAB executable: $MATLAB_BIN"
+echo "Using pleioFDR path in MATLAB: $PLEIO_MATLAB"
+
+"$MATLAB_BIN" -batch "cd('$PLEIO_MATLAB'); whos('-file','traitfiles_decomp_common/adeno_allEC_common.mat'); whos('-file','traitfiles_decomp_common/allEC_adeno_common.mat'); whos('-file','traitfiles_decomp_common/adeno_EEC_common.mat'); whos('-file','traitfiles_decomp_common/EEC_adeno_common.mat')"
 
 echo
 echo "### 05_prepare_decomposition_common_snps.sh completed"
