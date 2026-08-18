@@ -8,34 +8,45 @@ The code package is designed to support manuscript-level reproducibility while a
 
 This workflow supports the following analysis components:
 
-* Preparation of endometrial cancer summary statistics for LD Score regression (LDSC).
-* LDSC munging, SNP-heritability quality control, and genetic correlation analyses.
-* Harmonization of GWAS summary statistics for conjFDR / pleioFDR analyses.
-* Verification or optional generation of pleioFDR-compatible `.mat` trait files.
-* Verification of matched SNP-universe inputs for the six-pair decomposition analysis.
-* Optional regional colocalization around the chr12 rs9668810-indexed region.
-* Generation or verification of manuscript tables from LDSC, pleioFDR, and decomposition outputs.
+- Preparation of endometrial cancer summary statistics for LD Score regression (LDSC).
+- LDSC munging, SNP-heritability quality control, and genetic correlation analyses.
+- Harmonization of GWAS summary statistics for conjFDR/pleioFDR analyses.
+- Verification or optional generation of pleioFDR-compatible `.mat` trait files.
+- Verification of matched SNP-universe inputs for the six-pair decomposition analysis.
+- Optional regional colocalization around the chr12 rs9668810-indexed region.
+- Generation or verification of manuscript tables from LDSC, pleioFDR, and decomposition outputs.
 
 ## Repository status
 
 This is a cleaned code package. It excludes:
 
-* raw GWAS summary statistics;
-* large LDSC and pleioFDR reference files;
-* generated `.mat` files;
-* pleioFDR result folders;
-* intermediate large result files;
-* local troubleshooting logs;
-* WSL installation notes;
-* raw conversation extracts.
+- raw GWAS summary statistics;
+- large LDSC and pleioFDR reference files;
+- generated `.mat` files;
+- pleioFDR result folders;
+- intermediate large result files;
+- local troubleshooting logs;
+- WSL installation notes;
+- raw conversation extracts.
 
 Several downstream scripts are intentionally written as verify-first scripts. This is because pleioFDR/conjFDR conversion and decomposition output generation can be computationally and I/O intensive, and local installations may differ in output naming conventions.
 
 ## Data availability and restrictions
 
-Raw GWAS summary statistics and reference files are not redistributed in this repository. Users must obtain the original data from the respective data providers and comply with all applicable data-use restrictions.
+Raw GWAS summary statistics and large reference files are not redistributed in this repository. Users must obtain the original source data from the respective data providers and comply with all applicable data-use terms and restrictions.
 
-Expected raw input files are:
+The endometriosis-spectrum GWAS summary statistics are available through Zenodo:
+
+- Koller et al. endometriosis-spectrum GWAS summary statistics: DOI `10.5281/zenodo.18983492`
+
+The endometrial cancer GWAS summary-statistics datasets correspond to the following GWAS Catalog accessions:
+
+- All-histology endometrial cancer: `GCST006464`
+- Endometrioid endometrial cancer: `GCST006465`
+
+The overall endometriosis analysis in this workflow uses the publicly released European combined GWAS summary-statistics file excluding the 23andMe component. The adenomyosis and endometriosis-without-adenomyosis analyses use the corresponding European-ancestry phenotype-specific summary statistics.
+
+Expected local raw input files are:
 
 ```text
 raw/
@@ -46,7 +57,9 @@ raw/
 └── ECAC_EEC.valid_2.tsv
 ```
 
-The endometriosis-spectrum GWAS summary statistics were obtained from Koller et al. The accompanying data-use terms specify that the data are provided for scientific research purposes and that users should cite the corresponding publication. Endometrial cancer GWAS summary statistics should likewise be obtained from the original source and used according to the relevant data-use policies.
+These filenames reflect the local analysis environment and are provided only to document the expected workflow inputs; the source GWAS files themselves are not included in this repository.
+
+Users should cite the corresponding source GWAS publications and follow the data-use policies of the original data providers when obtaining and using these summary statistics.
 
 ## Directory structure
 
