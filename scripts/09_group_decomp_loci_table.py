@@ -202,35 +202,35 @@ def rebuild_table():
     out_rows = []
 
     for i, g in enumerate(groups, start=1):
-        group_rows = g["rows"]
-        best = sorted(group_rows, key=lambda r: float(r["conjFDR"]))[0]
+        rows_in_group = g["rows"]
+        best = sorted(rows_in_group, key=lambda r: float(r["conjFDR"]))[0]
 
         pair_cells = {}
         for p in PAIR_ORDER:
-            rs = [r for r in group_rows if r["Analysis"] == p]
+            rs = [r for r in rows_in_group if r["Analysis"] == p]
             if rs:
                 rs = sorted(rs, key=lambda r: float(r["conjFDR"]))
                 pair_cells[p] = " | ".join(fmt_row(r) for r in rs)
             else:
                 pair_cells[p] = "not detected"
 
-        directions = sorted(set(r["Direction"] for r in group_rows))
-        outcomes = sorted(set(r["Outcome"] for r in group_rows))
-        exposures = sorted(set(r["Exposure"] for r in group_rows))
+        directions = sorted(set(r["Direction"] for r in rows_in_group))
+        outcomes = sorted(set(r["Outcome"] for r in rows_in_group))
+        exposures = sorted(set(r["Exposure"] for r in rows_in_group))
 
         out_rows.append({
             "Group_ID": f"G{i}",
             "CHR": g["CHR"],
             "Observed_region_start": str(g["start"]),
             "Observed_region_end": str(g["end"]),
-            "N_rows_in_group": str(len(group_rows)),
+            "N_rows_in_group": str(len(rows_in_group)),
             "Best_lead_SNP": best["Lead_SNP"],
             "Best_BP": best["BP"],
             "Best_conjFDR": best["conjFDR"],
             "Detected_exposures": ";".join(exposures),
             "Detected_outcomes": ";".join(outcomes),
             "Directions_in_group": ";".join(directions),
-            "Classification": classify(group_rows),
+            "Classification": classify(rows_in_group),
             "ADENO_ALL_EC": pair_cells["ADENO_ALL_EC"],
             "ADENO_EEC": pair_cells["ADENO_EEC"],
             "OVERALL_ENDO_ALL_EC": pair_cells["OVERALL_ENDO_ALL_EC"],

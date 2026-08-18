@@ -76,7 +76,13 @@ run_coloc_pval <- function(file, outcome_prefix, s_outcome, n_outcome, outprefix
   check_dataset(ds1, suffix = "ADENO")
   check_dataset(ds2, suffix = outcome_prefix)
 
-  res <- coloc.abf(ds1, ds2)
+  res <- coloc.abf(
+  dataset1 = ds1,
+  dataset2 = ds2,
+  p1 = 1e-4,
+  p2 = 1e-4,
+  p12 = 1e-5
+)
 
   summary_dt <- as.data.table(as.list(res$summary))
   summary_dt[, analysis := outprefix]

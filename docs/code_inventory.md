@@ -14,7 +14,7 @@
 
 - `scripts/03_harmonize_conjfdr_inputs.sh`: creates HapMap3-filtered inputs, performs pairwise allele harmonization, flips endometrial cancer Z-scores when necessary to align effect alleles, excludes the MHC region for conjunctional FDR processing, and reports lambda GC sanity checks.
 - `scripts/04_prepare_pleiofdr_mat_inputs.sh`: verifies or optionally converts standardized `.std.pval.tsv` files into pleioFDR-compatible `.mat` trait files using `python_convert` and `9545380.ref`.
-- `scripts/05_prepare_decomposition_common_snps.sh`: post-processes standardized p-value files to create matched common-SNP inputs for the six phenotype-pair conjunctional FDR analyses. Requires standardized p-value outputs generated upstream.
+- `scripts/05_prepare_decomposition_common_snps.sh`: verifies existing matched common-SNP lists, standardized p-value files, and pleioFDR-compatible `.mat` files used for the six phenotype-pair conjunctional FDR analyses. Generation of these upstream decomposition inputs is not performed by the cleaned public script.
 
 ## Decomposition table generation
 
