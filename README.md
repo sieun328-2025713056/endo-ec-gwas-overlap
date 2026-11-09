@@ -1,119 +1,250 @@
-# Endometriosis–Adenomyosis–Endometrial Cancer GWAS Summary-Statistics Workflow
 
-This repository provides a curated reproducibility workflow for a GWAS summary-statistics analysis of genetic overlap among endometriosis, adenomyosis, and endometrial cancer.
+# Endometriosis-Spectrum and Endometrial Cancer GWAS
 
-The code package is designed to support manuscript-level reproducibility while avoiding redistribution of restricted raw GWAS summary statistics, large LD/reference files, generated `.mat` files, and local pleioFDR/conjFDR output folders.
+## Overview
 
-## Purpose
+This repository documents a GWAS summary-statistics workflow investigating shared genetic architecture between endometriosis-spectrum phenotypes and endometrial cancer.
 
-This workflow supports the following analysis components:
+The study combines genome-wide genetic correlation analyses, covariance-aware heterogeneity testing, conjunctional false discovery rate (conjFDR) analyses, and exploratory regional follow-up.
 
-- Preparation of endometrial cancer summary statistics for LD Score Regression (LDSC).
-- LDSC munging, SNP-heritability quality control, and genetic correlation analyses.
-- Harmonization of GWAS summary statistics for conjFDR/pleioFDR analyses.
-- Verification or optional generation of pleioFDR-compatible `.mat` trait files.
-- Verification of matched SNP-universe inputs for the six-pair decomposition analysis.
-- Exploratory regional colocalization around the chr12 rs9668810-indexed region.
-- Reproducible GTEx V10 eQTL follow-up of the chr12 rs9668810-indexed signal.
-- Generation or verification of manuscript-related tables from LDSC, pleioFDR, decomposition, colocalization, and functional-annotation outputs.
+The repository supports analytical transparency and reproducibility. It does not contain all data or intermediate files required for independent end-to-end reproduction.
 
-## Repository status
+## Study design
 
-This is a cleaned code package. It excludes:
+Three endometriosis-spectrum phenotypes were examined:
 
-- raw GWAS summary statistics;
-- large LDSC and pleioFDR reference files;
-- generated `.mat` files;
-- pleioFDR result folders;
-- intermediate large result files;
-- local troubleshooting logs;
-- WSL installation notes;
-- raw conversation extracts.
+1. Overall endometriosis, excluding 23andMe
+2. Adenomyosis
+3. Endometriosis without adenomyosis
 
-Several downstream scripts are intentionally written as verify-first scripts. This is because pleioFDR/conjFDR conversion and decomposition output generation can be computationally and I/O intensive, and local installations may differ in output naming conventions.
+Two endometrial cancer outcomes were considered:
 
-## Data availability and restrictions
+1. All-histology endometrial cancer (allEC)
+2. Endometrioid endometrial cancer (EEC)
 
-Raw GWAS summary statistics and large reference files are not redistributed in this repository. Users must obtain the original source data from the respective data providers and comply with all applicable data-use terms and restrictions.
+The analysis had three levels:
 
-The endometriosis-spectrum GWAS summary statistics are available through Zenodo:
+- **Primary:** LDSC genetic correlations and GenomicSEM covariance-aware heterogeneity tests
+- **Secondary:** Six matched conjunctional FDR analyses and recurrent-detection pattern classification
+- **Exploratory:** Selected chr12 colocalization and GTEx V10 functional annotation
 
-- Koller et al. endometriosis-spectrum GWAS summary statistics: DOI `10.5281/zenodo.18983492`
+The exploratory chr12 region was selected following the secondary conjFDR analysis, rather than being an independent primary analysis.
 
-The endometrial cancer GWAS summary-statistics datasets correspond to the following GWAS Catalog accessions:
+## Data sources
 
-- All-histology endometrial cancer: `GCST006464`
-- Endometrioid endometrial cancer: `GCST006465`
+### Endometriosis-spectrum GWAS
 
-The overall endometriosis analysis in this workflow uses the publicly released European combined GWAS summary-statistics file excluding the 23andMe component. The adenomyosis and endometriosis-without-adenomyosis analyses use the corresponding European-ancestry phenotype-specific summary statistics.
+European-ancestry summary statistics were obtained from the endometriosis and adenomyosis GWAS resources associated with:
 
-Expected local raw input files are:
+- https://doi.org/10.5281/zenodo.18983492
 
-```text
-raw/
-├── adenomyosis_EUR.txt
-├── endometriosis_EUR_wo_23andMe.txt
-├── endometriosis_wo.adenomyosis_EUR.txt
-├── ECAC_allEC.valid_2.tsv
-└── ECAC_EEC.valid_2.tsv
-```
+The overall endometriosis input excluded the 23andMe component.
 
-These filenames reflect the local analysis environment and are provided only to document the expected workflow inputs; the source GWAS files themselves are not included in this repository.
+### Endometrial cancer GWAS
 
-Users should cite the corresponding source GWAS publications and follow the data-use policies of the original data providers when obtaining and using these summary statistics.
+The endometrial cancer GWAS summary statistics correspond to:
 
-## Directory structure
+- All-histology EC: [GCST006464](https://www.ebi.ac.uk/gwas/studies/GCST006464)
+- Endometrioid EC: [GCST006465](https://www.ebi.ac.uk/gwas/studies/GCST006465)
 
-The expected project structure is:
+The sample sizes used for the EC analyses were:
+
+| Outcome | Cases | Controls | Total N |
+|---|---:|---:|---:|
+| allEC | 12,906 | 108,979 | 121,885 |
+| EEC | 8,758 | 46,126 | 54,884 |
+
+### Data restrictions
+
+Raw GWAS summary statistics and large reference files are not redistributed here.
+
+Users must obtain source datasets from their original providers and follow applicable access, licensing, and data-use requirements.
+
+Expected local raw filenames:
 
 ```text
-endo_ecancer/
-├── raw/                  # restricted raw GWAS summary statistics; not included
-├── ref/                  # LD/reference files; not included
-├── munged/               # LDSC munged summary statistics
-├── results/
-│   ├── tables/           # workflow summary tables
-│   ├── coloc/            # regional colocalization outputs
-│   ├── conjfdr/          # large conjFDR-related intermediate files; not included
-│   └── reproduced_gtex/  # reproduced GTEx V10 follow-up outputs
-├── scripts/
-│   └── clean/            # GTEx V10 reproducibility scripts
-├── docs/                 # workflow documentation
-└── README.md
+adenomyosis_EUR.txt
+endometriosis_EUR_wo_23andMe.txt
+endometriosis_wo.adenomyosis_EUR.txt
+ECAC_allEC.valid_2.tsv
+ECAC_EEC.valid_2.tsv
 ```
 
-## Configuration
+These are local workflow filenames, not necessarily the providers' original filenames.
 
-Before running the workflow, review `scripts/00_config.sh` and either modify the default paths or override them using environment variables.
+## Primary analysis: LDSC and GenomicSEM
 
-The configuration file defines local paths such as:
+Six bivariate LDSC genetic correlations were estimated to characterize genetic overlap.
 
-```bash
-PROJECT=/path/to/endo_ecancer
-RAW=/path/to/endo_ecancer/raw
-REF=/path/to/endo_ecancer/ref
-MUNGED=/path/to/endo_ecancer/munged
-RESULTS=/path/to/endo_ecancer/results
-CJ=/path/to/endo_ecancer/results/conjfdr
-PLEIO=/path/to/pleiofdr
+The final primary inference evaluated whether genetic correlations differed across the three endometriosis-spectrum phenotypes within each EC outcome.
+
+GenomicSEM `rgmodel()` provided:
+
+- `R`: estimated genetic correlations
+- `V_R`: sampling covariance matrix
+
+Covariance-aware omnibus Wald tests were performed separately for allEC and EEC.
+
+The primary multiple-testing threshold was:
+
+- Two omnibus tests
+- Bonferroni-corrected significance: P < 0.025
+
+Six post-hoc pairwise contrasts were evaluated using Holm correction across all six comparisons.
+
+### Primary omnibus results
+
+| Outcome | Wald ChiSq(2) | P |
+|---|---:|---:|
+| allEC | 8.155546 | 0.016945159 |
+| EEC | 9.632358 | 0.008097669 |
+
+Both primary omnibus tests met the corrected threshold.
+
+### Selected post-hoc comparison
+
+For the overall endometriosis versus adenomyosis contrast:
+
+| Outcome | Raw P | Holm P |
+|---|---:|---:|
+| allEC | 0.012022315 | 0.06011158 |
+| EEC | 0.006044072 | 0.03626443 |
+
+These findings do not establish that every phenotype pair has significantly different genetic correlations.
+
+Earlier approximate tests that ignored covariance are retained for provenance but are not the final inferential basis.
+
+## Sensitivity analyses
+
+The LDSC sampling-covariance estimation was evaluated using different block settings.
+
+| Analysis | allEC omnibus P | EEC omnibus P |
+|---|---:|---:|
+| 100 blocks | 0.01151326 | 0.007853592 |
+| 200 blocks (primary) | 0.016945159 | 0.008097669 |
+| 400 blocks | 0.02482712 | 0.01197984 |
+| ENDO-only MAF filter | 0.02458479 | 0.01214624 |
+
+For the ENDO-only MAF sensitivity analysis:
+
+- The overall-endometriosis LDSC input was reprocessed with `--maf-min 0.05`.
+- The munged ENDO input retained 1,064,328 SNPs.
+- Other GWAS inputs in each four-trait LDSC analysis were unchanged.
+- Saved LDSC RDS files were used to verify downstream GenomicSEM and Wald calculations.
+
+Both MAF-sensitivity omnibus results met P < 0.025.
+
+However, no individual pairwise contrast survived Holm correction in this sensitivity analysis.
+
+The original overall-endometriosis univariate LDSC intercept was 0.7672 (SE 0.0098). The cause of this deflation remains unresolved.
+
+Detailed validation:
+
+- `docs/maf05_rgmodel_validation.md`
+- `docs/reproducibility_notes.md`
+
+## Secondary analysis: conjunctional FDR
+
+Six phenotype-pair comparisons were evaluated using a common matched SNP universe.
+
+Key settings:
+
+- 1,057,700 matched HapMap3 SNPs
+- MHC exclusion: chr6:26-34 Mb
+- Random pruning: `randprune_n = 20`
+- Regional grouping based on a maximum 500-kb gap between lead-SNP records and the current region end
+
+The MHC exclusion applies to conjFDR processing, not to LDSC analyses.
+
+Regional grouping yielded:
+
+- 92 lead-SNP records
+- 45 grouped genomic regions
+- 22 regions detected in more than one phenotype-pair comparison
+
+The six comparisons are statistically dependent. Repeated detection therefore does not constitute independent replication.
+
+Highlighted recurrent-detection regions include WNT4, SKAP1, chr8 TMEM75/PVT1, and chr12 SSPN-BHLHE41.
+
+These labels represent statistical regions or candidate gene annotations, not confirmed causal genes.
+
+## Exploratory chr12 colocalization
+
+A region indexed by rs9668810 near SSPN-BHLHE41 was selected for exploratory follow-up.
+
+The regional window was rs9668810 +/-500 kb.
+
+The final reference analysis used:
+
+**Adenomyosis**
+
+- P-values and minor allele frequencies
+- Median eligible variant-level `AD_N`: 33,460.65
+- Assumed case fraction: `s = 0.5`
+
+**Endometrial cancer**
+
+- Aligned beta estimates
+- Squared standard errors as `varbeta`
+- allEC N = 121,885
+- EEC N = 54,884
+- Observed outcome-specific case fractions
+
+Colocalization priors were:
+
+- `p1 = 1e-4`
+- `p2 = 1e-4`
+- `p12 = 1e-5`
+
+### Conditional colocalization results
+
+| Outcome | SNPs | PP.H4 |
+|---|---:|---:|
+| allEC | 3,159 | 0.9931782 |
+| EEC | 3,158 | 0.9880625 |
+
+rs7959150 had the highest conditional SNP.PP.H4 in both analyses.
+
+These posterior probabilities are conditional on the model inputs, priors, and single-causal-variant-per-trait assumption.
+
+**Important unresolved limitation:** the upstream definition of adenomyosis `AD_N` and the appropriateness of `s = 0.5` require further methodological clarification.
+
+High PP.H4 must not be interpreted as proof of an individual causal variant or causal gene.
+
+The historical colocalization script and updated final reference script are intentionally distinguished:
+
+- Historical: `scripts/06_run_coloc_chr12_rs9668810.R`
+- Final reference: `scripts/14_coloc_chr12_final_reference.R`
+
+## Functional annotation
+
+GTEx V10 eQTL follow-up was used for exploratory regional functional annotation.
+
+The repository retains scripts for:
+
+- rs9668810 eQTL querying
+- Targeted uterus eQTL auditing
+
+eQTL associations do not establish causal mediation, a causal gene, or a causal tissue.
+
+## Repository structure
+
+```text
+raw/                       Source GWAS files; not distributed
+ref/                       LD/reference resources; not distributed
+munged/                    LDSC inputs; not distributed
+results/                   Intermediate and final results
+scripts/                   Analysis and validation scripts
+scripts/clean/             GTEx V10 follow-up scripts
+docs/                      Data, provenance and validation documents
+README.md                  Project overview
 ```
 
-These paths reflect the local analysis environment and can be modified by each user before running the workflow.
+Some small GTEx-related outputs are tracked within `results/`. Large inputs and intermediate outputs are not included.
 
-## Software environment
+## Scripts
 
-The primary analysis workflow used the following software and computational environments:
-
-- LD Score Regression (LDSC) v1.0.1 in a Python 2.7.18 environment for summary-statistics munging, SNP-heritability quality control, and genetic correlation analyses.
-- pleioFDR/conjFDR with MATLAB R2026a for conjunctional FDR-related processing and `.mat` file handling.
-- R with `coloc` v5.2.3 and `data.table` for exploratory P-value-based regional colocalization.
-- Python 3, including the `requests` package, for table processing, recurrent-locus grouping, and GTEx V10 API-based eQTL follow-up.
-
-The workflow also uses externally obtained LD/reference resources and pleioFDR/conjFDR software that are not redistributed in this repository. Local software and resource paths can be configured through `scripts/00_config.sh` and relevant environment variables.
-
-## Main workflow
-
-The analysis workflow is organized as numbered scripts:
+### Original workflow and historical scripts
 
 ```text
 scripts/00_config.sh
@@ -126,117 +257,100 @@ scripts/06_run_coloc_chr12_rs9668810.R
 scripts/07_make_ldsc_tables_from_logs.py
 scripts/08_collect_decomp_raw_loci.py
 scripts/09_group_decomp_loci_table.py
+```
+
+The output of script 07 includes historical approximate genetic-correlation difference tests that are not the final covariance-aware inference.
+
+### Added final-analysis and validation scripts
+
+```text
+scripts/12_rgmodel_final_tests.R
+scripts/13_rgmodel_sensitivity.R
+scripts/14_coloc_chr12_final_reference.R
+scripts/15_maf05_rgmodel_verification.R
+```
+
+Their purposes are:
+
+- **12:** Final covariance-aware omnibus and pairwise Wald calculations from saved GenomicSEM results
+- **13:** LDSC block-sensitivity follow-up from saved LDSC results
+- **14:** Updated exploratory chr12 colocalization reference implementation
+- **15:** ENDO-only MAF-sensitivity downstream verification
+
+These scripts were added for transparency and should not be represented as unchanged original execution scripts.
+
+All four scripts passed R syntax parsing.
+
+Script 15 was executed against saved LDSC RDS files and reproduced the previously reported validation metrics within the specified tolerance.
+
+Modified public copies of scripts 13 and 14 have not been independently verified end-to-end after their repository adjustments.
+
+### GTEx scripts
+
+```text
 scripts/clean/09_query_gtex_v10_rs9668810.py
 scripts/clean/10_make_gtex_uterus_final_audit.py
 ```
 
-A typical workflow is:
+## Configuration and execution
+
+The existing workflow uses `scripts/00_config.sh` for local configuration.
+
+Example variables:
 
 ```bash
-source scripts/00_config.sh
-
-bash scripts/01_prepare_project_and_ldsc_inputs.sh
-bash scripts/02_run_ldsc_qc_and_rg.sh
-bash scripts/03_harmonize_conjfdr_inputs.sh
-bash scripts/04_prepare_pleiofdr_mat_inputs.sh
-bash scripts/05_prepare_decomposition_common_snps.sh
-Rscript scripts/06_run_coloc_chr12_rs9668810.R
-python3 scripts/07_make_ldsc_tables_from_logs.py
-python3 scripts/08_collect_decomp_raw_loci.py
-python3 scripts/09_group_decomp_loci_table.py
-python3 scripts/clean/09_query_gtex_v10_rs9668810.py results/reproduced_gtex
-python3 scripts/clean/10_make_gtex_uterus_final_audit.py
+PROJECT=/path/to/endo_ecancer
+RAW=/path/to/endo_ecancer/raw
+REF=/path/to/endo_ecancer/ref
+MUNGED=/path/to/endo_ecancer/munged
+RESULTS=/path/to/endo_ecancer/results
+CJ=/path/to/endo_ecancer/results/conjfdr
+PLEIO=/path/to/pleiofdr
 ```
 
-## Verify-first downstream workflow
+Before running any script, review its input requirements, existing outputs, and configuration settings.
 
-Several downstream scripts verify existing intermediate files and output tables by default instead of regenerating large files:
+Some scripts operate on precomputed results; other scripts prepare or regenerate files and may require substantial computation.
+
+The repository does not currently provide a fully verified, one-command end-to-end reproduction pipeline.
+
+### MAF verification example
+
+The MAF verification script reads existing LDSC RDS objects. It does not rerun GWAS munging or LDSC.
 
 ```bash
-bash scripts/04_prepare_pleiofdr_mat_inputs.sh
-bash scripts/05_prepare_decomposition_common_snps.sh
-python3 scripts/08_collect_decomp_raw_loci.py
-python3 scripts/09_group_decomp_loci_table.py
+RUN_MAF05_VERIFICATION=1 \
+MAF_LDSC_DIR=/path/to/maf05 \
+Rscript scripts/15_maf05_rgmodel_verification.R
 ```
 
-Optional regeneration commands are:
+The local installation may additionally require `GSEM_LIB` to identify the GenomicSEM R library.
 
-```bash
-RUN_CONVERSION=1 bash scripts/04_prepare_pleiofdr_mat_inputs.sh
-RUN_REBUILD=1 python3 scripts/08_collect_decomp_raw_loci.py
-RUN_REBUILD=1 python3 scripts/09_group_decomp_loci_table.py
-```
-
-Scripts 08 and 09 do not overwrite existing output tables if zero rows are detected during rebuild.
-
-## Expected verified outputs
-
-Expected verified pleioFDR and decomposition outputs include:
+The input directory must contain:
 
 ```text
-$PLEIO/traitfiles/adenomyosis_noMHC.mat
-$PLEIO/traitfiles/allEC_noMHC.mat
-$PLEIO/traitfiles/adenomyosis_EECpair_noMHC.mat
-$PLEIO/traitfiles/EEC_noMHC.mat
-$PLEIO/traitfiles_decomp_common/
-
-results/tables/table_s9_decomp_conjfdr_loci_raw.tsv
-results/tables/table_s10_decomp_locus_grouped_from_file.tsv
+ldsc_allEC_4trait.rds
+ldsc_EEC_4trait.rds
 ```
 
-## Workflow output tables
+Running this script requires the original intermediate RDS files, which are not distributed in the repository.
 
-The workflow generates or uses several intermediate and downstream summary tables. Internal filenames such as `table_s1`, `table_s7`, and `table_s14` reflect workflow-development labels and do not necessarily correspond to the final numbering of manuscript supplementary tables.
+## Expected outputs and provenance
 
-LDSC-derived tables generated by `scripts/07_make_ldsc_tables_from_logs.py` include:
-
-```text
-results/tables/table_s1_ldsc_h2_qc_from_logs.tsv
-results/tables/table_s2_ldsc_rg_from_logs.tsv
-results/tables/table_s3_rg_approx_difference_test_from_logs.tsv
-results/tables/table_s7_ldsc_rg_multiple_testing_correction.tsv
-```
-
-The multiple-testing output applies Benjamini–Hochberg FDR correction across the six primary cross-trait genetic-correlation tests. The approximate between-phenotype difference tests use `sqrt(SE1^2 + SE2^2)` and do not model covariance arising from the shared endometrial cancer GWAS or non-independent endometriosis-spectrum estimates.
-
-Pair-specific and recurrent-locus outputs directly verified or rebuilt by the public decomposition scripts include:
+The workflow uses or generates the following conjFDR decomposition tables:
 
 ```text
 results/tables/table_s9_decomp_conjfdr_loci_raw.tsv
 results/tables/table_s10_decomp_locus_grouped_from_file.tsv
 ```
 
-Additional downstream summary tables retained for workflow traceability include:
+Other retained downstream tables include LDSC QC summaries, phenotype-pair statistics, directionality classifications, and regional summaries.
 
-```text
-results/tables/table_s8_decomp_conjfdr_pair_counts.tsv
-results/tables/table_s11_key_recurrent_loci_decomposition.tsv
-results/tables/table_s12_pair_level_directionality_summary.tsv
-results/tables/table_s13_grouped_locus_classification_direction_summary.tsv
-results/tables/table_s14_key_recurrent_loci_compact_summary.tsv
-results/tables/table_s15_phenotype_pairwise_rg.tsv
-```
+Internal filenames do not necessarily match final manuscript supplementary-table numbering.
 
-Not all downstream summary tables are regenerated by the cleaned public code package. Detailed output provenance is documented in `docs/final_output_tables.md`.
+Detailed output descriptions are available in `docs/final_output_tables.md`.
 
-## Regional colocalization outputs
-
-`scripts/06_run_coloc_chr12_rs9668810.R` generates separate outputs for the adenomyosis–all-histology endometrial cancer and adenomyosis–endometrioid endometrial cancer analyses.
-
-Expected outputs include:
-
-```text
-results/coloc/rs9668810_region/adeno_allEC_rs9668810_500kb_coloc_summary.tsv
-results/coloc/rs9668810_region/adeno_allEC_rs9668810_500kb_coloc_full_results.tsv
-results/coloc/rs9668810_region/adeno_allEC_rs9668810_500kb_top_H4_snps.tsv
-results/coloc/rs9668810_region/adeno_EEC_rs9668810_500kb_coloc_summary.tsv
-results/coloc/rs9668810_region/adeno_EEC_rs9668810_500kb_coloc_full_results.tsv
-results/coloc/rs9668810_region/adeno_EEC_rs9668810_500kb_top_H4_snps.tsv
-```
-
-## GTEx V10 functional-annotation outputs
-
-The GTEx V10 follow-up scripts generate or summarize:
+GTEx V10 output examples:
 
 ```text
 results/reproduced_gtex/gtex_v10_rs9668810_significant_eqtl.tsv
@@ -245,41 +359,63 @@ results/reproduced_gtex/gtex_v10_rs9668810_uterus_final_audit.tsv
 results/reproduced_gtex/gtex_v10_rs9668810_query_metadata.json
 ```
 
-The GTEx V10 follow-up is exploratory. The outputs are used to document functional-annotation results and do not establish a causal gene or tissue-specific mechanism.
+These paths describe expected workflow outputs and do not imply that every file is included in the repository.
+
+## Software environment
+
+Software used in the analysis included:
+
+- LDSC v1.0.1 with Python 2.7.18
+- pleioFDR/conjFDR with MATLAB R2026a
+- R and Python 3
+- GenomicSEM 0.0.5
+- lavaan 0.6-19
+- coloc 5.2.3
+- data.table and other R dependencies
+- requests and other Python dependencies
+
+An exact cross-language environment lockfile is not currently available.
+
+Package startup warnings observed during validation have not all been independently classified.
+
+Software, dependency, and reference-resource availability must be checked before external reproduction.
 
 ## Documentation
 
-Additional documentation is provided in the `docs/` directory:
+Additional files:
 
-```text
-docs/code_inventory.md
-docs/data_sources.md
-docs/final_output_tables.md
-docs/interpretation_limits.md
-docs/reproducibility_notes.md
-docs/sample_size_derivation.md
-```
+- `docs/code_inventory.md`
+- `docs/data_sources.md`
+- `docs/final_output_tables.md`
+- `docs/interpretation_limits.md`
+- `docs/maf05_rgmodel_validation.md`
+- `docs/reproducibility_notes.md`
+- `docs/sample_size_derivation.md`
 
-These files document source GWAS datasets, redistribution limits, derivation of the 23andMe-excluded overall endometriosis sample size, code provenance, expected workflow outputs, reproducibility notes, and interpretation limits for LDSC, conjFDR, colocalization, and functional annotation.
+The documents describe data provenance, output traceability, statistical methods, validation results, and remaining limitations.
 
 ## Interpretation limits
 
-This workflow supports summary-statistics-based genetic epidemiology analyses. The results should not be interpreted as establishing individual-level risk, clinical prediction, causal variants, causal genes, or biological mechanisms.
+The study uses summary-level GWAS data and does not provide individual-level clinical prediction or causal inference.
 
-Non-detection of a locus in a phenotype pair indicates lack of detection under the current GWAS power, phenotype definition, matched SNP universe, and conjFDR threshold. It should not be interpreted as evidence that the underlying association is absent.
+Important limitations include:
 
-Candidate gene names used in output tables should be interpreted as regional annotations or prioritization labels, not as confirmed causal genes.
+- Phenotype heterogeneity and differences in source GWAS power
+- Dependence between genetic-correlation estimates
+- Unresolved overall-endometriosis LDSC intercept deflation
+- Incomplete provenance of adenomyosis effective sample size for colocalization
+- Sensitivity of colocalization posterior support to modeling assumptions
+- Non-independent recurrent-locus detections
+- Exploratory rather than experimentally validated functional annotations
 
-Approximate between-phenotype genetic-correlation difference tests do not account for covariance arising from the shared endometrial cancer GWAS or non-independent endometriosis-spectrum estimates and should therefore be interpreted as exploratory.
-
-Regional colocalization and GTEx V10 eQTL follow-up are exploratory and do not establish a causal variant, causal gene, or tissue-specific biological mechanism.
+See `docs/interpretation_limits.md` for a detailed interpretation framework.
 
 ## Citation
 
-Users should cite the original GWAS publications for all source summary statistics and should follow the data-use policies of the original data providers.
+Users should cite the original GWAS publications and datasets according to the source providers' instructions.
 
-If using this workflow, please cite the associated manuscript once available.
+Please cite the associated manuscript once available.
 
 ## Contact
 
-For questions about the workflow, please contact the corresponding author of the associated manuscript.
+For questions about the workflow, contact the corresponding author of the associated manuscript.
