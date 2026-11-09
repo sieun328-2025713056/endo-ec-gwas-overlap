@@ -11,8 +11,7 @@ The adenomyosis, endometriosis-without-adenomyosis,
 and endometrial cancer inputs were unchanged.
 
 LDSC munging used `--maf-min 0.05`.
-The resulting ENDO file contained 1,064,328 SNPs with
-nonmissing beta values.
+The ENDO munged dataset contained 1,064,328 retained SNPs.
 
 ## Existing LDSC inputs
 
@@ -69,4 +68,4 @@ have not yet been independently reviewed.
 
 The verification confirms the downstream calculations
 from saved LDSC RDS files, not the correctness of
-the original GWAS or LD reference resources.
+'the original GWAS or LD reference resources.
